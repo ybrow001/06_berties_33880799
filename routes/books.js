@@ -1,7 +1,8 @@
 // Create a new router
 const ejs = require("ejs");
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+
 
 const redirectLogin = (req, res, next) => {
     if (!req.session.userId ) {

@@ -5,6 +5,9 @@ const router = express.Router();
 // include bcrypt
 const bcrypt = require('bcrypt');
 
+// include express-validator
+const {check, validationResult} = require('express-validator');
+
 const redirectLogin = (req, res, next) => {
     if (!req.session.userId ) {
         res.redirect('./login') // redirect to the login page
@@ -17,31 +20,41 @@ router.get('/register', function (req, res, next) {
     res.render('register.ejs')
 });
 
-router.post('/registered', function (req, res, next) {
+router.post('/registered', [
+    check('email').isEmail(), 
+    check('username').isLength({min: 5, max: 20}),
+    check('password').isLength({min: 8})
+],
+function (req, res, next) {
     // saving data in database
     const saltRounds = 10;
     const plainPassword = req.body.password;
+    const errors = validationResult(req);
 
-    // bcrypt.hash() is an async func - so db.queury must be run inside it to store the hashed password
-    bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) { 
-        // Store hashed password in your database.
-        if(err) {
-            next(err);
-        }
-
-        const sqlQuery = 'INSERT INTO users (first_name, last_name, email, username, hashed_password) VALUES (?,?,?,?,?)';
-        const newRecord = [req.body.first, req.body.last, req.body.email, req.body.username, hashedPassword];
-
-        db.query(sqlQuery, newRecord, (err, result) => {
+    if(!errors.isEmpty()) {
+        res.render('./register');
+    } else {
+        // bcrypt.hash() is an async func - so db.queury must be run inside it to store the hashed password
+        bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) { 
+            // Store hashed password in your database.
             if(err) {
-            next(err)
-        } else {
-            result = `hello ${req.body.first} ${req.body.last} you are now registered! we will send you an email at ${req.body.email}. 
-            your password is: ${req.body.password}, your hashed password is: ${hashedPassword}.`;
-            res.send(result)
-        }
-    });  
-    });                                                                
+                next(err);
+            }
+
+            const sqlQuery = 'INSERT INTO users (first_name, last_name, email, username, hashed_password) VALUES (?,?,?,?,?)';
+            const newRecord = [req.body.first, req.body.last, req.body.email, req.body.username, hashedPassword];
+
+            db.query(sqlQuery, newRecord, (err, result) => {
+                if(err) {
+                    next(err)
+                } else {
+                    result = `hello ${req.body.first} ${req.body.last} you are now registered! we will send you an email at ${req.body.email}. 
+                    your password is: ${req.body.password}, your hashed password is: ${hashedPassword}.`;
+                    res.send(result)
+                }
+            });  
+        })
+    }                                                                
 }); 
 
 router.get('/list', redirectLogin, function (req, res, next) {
