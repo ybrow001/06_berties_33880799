@@ -1,8 +1,6 @@
 // Create a new router
-const ejs = require("ejs");
 const express = require("express");
 const router = express.Router();
-
 
 const redirectLogin = (req, res, next) => {
     if (!req.session.userId ) {
@@ -22,7 +20,7 @@ router.get('/search-result', function (req, res, next) {
 
     //searching in the database
     db.query(sqlQuery, (err, result) => {
-        if (err) {
+        if(err) {
             next(err)
         }
         res.render("search.ejs", {books: result, searchResult: req.query.search})

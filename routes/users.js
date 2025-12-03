@@ -115,5 +115,14 @@ router.post('/loggedin', [
     }  
 });
 
+router.get('/logout', redirectLogin, (req,res) => {
+    req.session.destroy(err => {
+        if(err) {
+            return res.redirect('./')
+        }
+        res.send('you are now logged out')
+    })
+});
+
 // export the router object so index.js can access it
 module.exports = router;
